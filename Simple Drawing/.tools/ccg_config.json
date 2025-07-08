@@ -1,0 +1,27 @@
+{
+"args_count": 3,
+
+"paths": {
+    "include": [
+        "../include",
+        "../../.3rdParty/include",
+        "%MINGW64%/include",
+        "%PDT_I%"
+    ],
+
+    "lib": [
+        "../lib",
+        "%PDT_L%"
+    ],
+    "source_code": [
+        "../../.3rdParty/src",
+        "../src"
+    ]
+},
+"arguments": {
+    "output" : " -o ../bin/App.exe",
+    "lib_suffix" : [
+        "-lglfw3", "-lopengl32", "-std=c++23"
+    ]
+}
+}
