@@ -8,17 +8,17 @@
 using namespace SimpleDrawingDemo;
 
 int main() {
-
-/* --------------创建器-------------- */
     // 创建窗口
     GLFWwindow* window = Initer::InitWindow();
-
-    // 创建渲染数据实例
-    RenderData* data = RenderData::CreateInst();
-
-    data->Draw();
-
-/* --------------渲染循环-------------- */
+    
+    // 获取渲染数据实例并初始化
+    RenderData* data = RenderData::GetInstance();
+    data->screenWidth = 1920;
+    data->screenHeight = 1080;
+    data->InitRayTracingResources();
+    
+    // 设置鼠标回调
+    glfwSetCursorPosCallback(window, MainLoop::MousePosCallback);
 
     // 主循环
     while (!glfwWindowShouldClose(window)) {
@@ -26,7 +26,7 @@ int main() {
         MainLoop::RenderLoop(window, data);
     }
 
-/* --------------资源清理-------------- */
+    // 资源清理
     Initer::CleanResources(&data);
 
     return 0;

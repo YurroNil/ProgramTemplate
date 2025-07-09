@@ -1,9 +1,10 @@
 // resources/shaders/fragment/general.glsl
 
-#version 330 core
+#version 450 core
 out vec4 FragColor;
-uniform vec3 uColor;
+in vec2 TexCoords;
+uniform sampler2D screenTexture;
 
 void main() {
-    FragColor = vec4(uColor, 1.0); // 设置带透明度的颜色
+    FragColor = texture(screenTexture, TexCoords);
 }

@@ -1,1 +1,1 @@
-g++.exe -I"../include" -I"../.3rdParty/include" -I"D:/PDT-C/include" -c "../include/pch.h" -o "../include/pch.h.gch" -fexec-charset=UTF-8 -std=c++23 -g -Winvalid-pch
+g++.exe -I"../include" -I"../../.3rdParty/include" -I"D:/PDT-C/include" -c "../include/pch.h" -o "../include/pch.h.gch" -fexec-charset=UTF-8 -std=c++23 -g -Winvalid-pch

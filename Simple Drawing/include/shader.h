@@ -1,10 +1,10 @@
+// include/shader.h
 #pragma once
 namespace SimpleDrawingDemo {
 
 class RenderData;
 
 struct Shader {
-
     /* ------- 静态成员与方法 ------- */
     inline static unsigned int s_programID = 0;
 
@@ -13,6 +13,7 @@ struct Shader {
         const string& vsh_path = "", const string& fsh_path = "",
         const string& geo_path = "", const string& csh_path = ""
     );
+    static unsigned int CreateComputeShader(const string& path);
     static unsigned int Compile(const string& path, GLenum type);
 
     /* ------- 实例成员与方法 ------- */

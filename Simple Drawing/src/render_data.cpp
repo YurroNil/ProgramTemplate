@@ -1,4 +1,4 @@
-// src/render_cpp
+// src/render_data.cpp
 #include "pch.h"
 #include "render_data.h"
 #include "shader.h"
@@ -6,77 +6,93 @@
 
 namespace SimpleDrawingDemo {
 
-RenderData::RenderData(int segments, int vertex_size, ShaderPaths& shader_paths)
-    : shader(new Shader()), segments(segments), vertices(new float[segments * vertex_size])
+// 单例实例
+RenderData* RenderData::instance = nullptr;
+
+RenderData::RenderData() 
+    : shader(new Shader()), screenWidth(1920), screenHeight(1080),
+      cameraPos(0.0f, 0.0f, 3.0f), cameraFront(0.0f, 0.0f, -1.0f), cameraUp(0.0f, 1.0f, 0.0f),
+      outputTexture(0), quadVAO(0), quadVBO(0), computeShaderID(0) 
 {
+    // 初始化顶点数组（空）
+    vertices = nullptr;
+    segments = 0;
+}
+
+RenderData::~RenderData() {
+    // 删除光线追踪资源
+    glDeleteTextures(1, &outputTexture);
+    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteBuffers(1, &quadVBO);
+    glDeleteProgram(computeShaderID);
+    
+    // 删除着色器程序
+    if (shader) {
+        glDeleteProgram(shader->s_programID);
+        delete shader;
+    }
+    
+    // 删除顶点数据
+    if (vertices) {
+        delete[] vertices;
+    }
+}
+
+// 初始化光线追踪资源
+void RenderData::InitRayTracingResources() {
+    // 创建计算着色器
+    computeShaderID = Shader::CreateComputeShader(CSH_PATH + string("ray_tracing.glsl"));
+    
+    // 创建输出纹理
+    glGenTextures(1, &outputTexture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, outputTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glBindImageTexture(0, outputTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    
+    // 创建全屏四边形
+    float quadVertices[] = {
+        // 位置       // 纹理坐标
+        -1.0f,  1.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f, 1.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f
+    };
+    
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glBindVertexArray(0);
+    
+    // 创建全屏渲染着色器
+    const string general_path = string("general.glsl");
+    ShaderPaths shader_paths = { FSH_PATH + general_path, VSH_PATH + general_path, "", "" };
     shader->s_programID = Shader::Create(
         shader_paths.vsh_path, shader_paths.fsh_path,
         shader_paths.gsh_path, shader_paths.csh_path
     );
-}
-
-RenderData::~RenderData() {
-
-    // 删除顶点与顶点缓冲数据
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shader->s_programID);
-
-    // 删除实例
-    delete[] vertices;
-    delete shader;
-}
-
-// 顶点对象绑定处理
-void RenderData::BindVertexObjects() {
-    if(vertices == nullptr) std::cerr << "[BinderFn] 空指针异常, vertices指针大小: " << sizeof(vertices) << std::endl;
     
-    // 创建VAO和VBO
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    // 绑定缓冲
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // 设置顶点属性指针
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // 解绑
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
-    glBindVertexArray(0);
+    // 设置纹理采样器
+    glUseProgram(shader->s_programID);
+    glUniform1i(glGetUniformLocation(shader->s_programID, "screenTexture"), 0);
 }
 
-// 三次函数计算
-float CubicFn(float x) {
-    return -2.0f * pow(x, 3) + 5.0f * pow(x, 2) - 7.0f * x + 9.0f;
-}
-
-// 绘制命令
-void RenderData::Draw() {
-    // 绑定顶点对象
-    BindVertexObjects();
-
-    // 生成顶点数据（将函数值映射到[-1, 1]范围）
-    const float x_min = -2.0f, x_max = 4.0f; // x取值范围
-
-    for(int i = 0; i < segments; ++i) {
-        float x = x_min + (x_max - x_min) * i / (segments - 1);
-        float y = CubicFn(x);
-        
-        // 归一化处理（根据函数值范围调整）
-        vertices[i*2] = (x - x_min)/(x_max - x_min)*2 - 1; // x映射到[-1,1]
-        vertices[i*2 + 1] = y / 20.0f; // y值缩放（根据实际需要调整除数）
+RenderData* RenderData::GetInstance() {
+    if (!instance) {
+        instance = new RenderData();
     }
-}
-
-RenderData* RenderData::CreateInst() {
-    const unsigned int segments = 100;
-    const string general_path = string("general.glsl");
-    ShaderPaths shader_paths = { FSH_PATH + general_path, VSH_PATH + general_path, "", "" };
-
-    return new RenderData(segments, segments * 2, shader_paths);
+    return instance;
 }
 }   // namespace SimpleDrawingDemo
