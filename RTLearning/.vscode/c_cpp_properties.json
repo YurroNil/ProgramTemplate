@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "D:/PDT-C/include",
+                "${workspaceFolder}/../.3rdParty/include",
+                
+                "D:/OptiX-SDK/include",
+                "D:/OptiX-SDK/SDK",
+                "D:/CUDA_Toolkit/include",
+                "D:/OptiX-SDK/SDK/optixConsole"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "D:\\PDT-C\\mingw64\\bin\\gcc.exe",
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}
