@@ -4,13 +4,12 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
+                "D:/PDT-C/mingw64/include",
                 "D:/PDT-C/include",
-                "${workspaceFolder}/../.3rdParty/include",
-                
+                "D:/PDT-C/include/assimp",
+                "D:/PDT-C/include/imgui",
                 "D:/OptiX-SDK/include",
-                "D:/OptiX-SDK/SDK",
-                "D:/CUDA_Toolkit/include",
-                "D:/OptiX-SDK/SDK/optixConsole"
+                "D:/CUDA_Toolkit/include"
             ],
             "defines": [
                 "_DEBUG",
